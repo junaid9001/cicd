@@ -1,0 +1,37 @@
+services:
+  repo2ci:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: repo2ci
+    ports:
+      - "8000:8000"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - DATABASE_URL=postgresql://repo2ci:repo2ci@db:5432/repo2ci
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret}
+      - JWT_EXP_MINUTES=${JWT_EXP_MINUTES:-1440}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: repo2ci-db
+    environment:
+      - POSTGRES_DB=repo2ci
+      - POSTGRES_USER=repo2ci
+      - POSTGRES_PASSWORD=repo2ci
+    volumes:
+      - repo2ci_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repo2ci -d repo2ci"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  repo2ci_pgdata:

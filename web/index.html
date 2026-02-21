@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Repo2CI Cloud</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
+    <main class="shell">
+      <header class="hero">
+        <p class="tag">Repo2CI Cloud</p>
+        <h1>Turn a GitHub URL into deploy-ready pipelines</h1>
+        <p class="lead">
+          Stack detection + CI/CD generation for GitHub Actions, GitLab CI, and Jenkins, with secure tenant auth.
+        </p>
+        <div class="status-row">
+          <span id="health-badge" class="badge">Checking API...</span>
+          <span id="session-badge" class="badge muted">No session</span>
+        </div>
+      </header>
+
+      <section class="grid-two">
+        <article class="panel">
+          <h2>Account</h2>
+          <p class="hint">Create a workspace account or login to generate files.</p>
+          <div class="stack">
+            <input id="auth_email" type="email" placeholder="you@company.com" />
+            <input id="auth_password" type="password" placeholder="password (8+ chars)" />
+            <input id="auth_company" type="text" placeholder="company name (signup only)" />
+          </div>
+          <div class="row">
+            <button id="register-btn" type="button">Sign Up</button>
+            <button id="login-btn" type="button" class="btn-alt">Login</button>
+            <button id="logout-btn" type="button" class="btn-ghost">Logout</button>
+          </div>
+          <p id="auth-status" class="msg"></p>
+        </article>
+
+        <article class="panel">
+          <h2>Generate</h2>
+          <p class="hint">Choose provider and generate complete pipeline files.</p>
+          <form id="analyze-form" class="stack">
+            <label for="repo_url">GitHub Repository URL</label>
+            <input id="repo_url" name="repo_url" type="url" placeholder="https://github.com/owner/repo" required />
+
+            <label for="ci_provider">CI/CD Provider</label>
+            <select id="ci_provider">
+              <option value="github">GitHub Actions</option>
+              <option value="gitlab">GitLab CI</option>
+              <option value="jenkins">Jenkins</option>
+            </select>
+
+            <div class="row checks">
+              <label class="check">
+                <input type="checkbox" id="include_deploy" checked />
+                Include CD
+              </label>
+              <label class="check">
+                <input type="checkbox" id="include_security" checked />
+                Include Security
+              </label>
+            </div>
+
+            <button id="submit-btn" type="submit">Generate CI/CD</button>
+          </form>
+          <p id="status" class="msg"></p>
+        </article>
+      </section>
+
+      <section class="grid-two bottom">
+        <article class="panel">
+          <h2>Detected Profile</h2>
+          <div id="profile" class="mono muted">No analysis yet.</div>
+          <h3>Recommendations</h3>
+          <ul id="recommendations" class="list"></ul>
+          <h3>Recent Analyses</h3>
+          <div id="recent" class="recent muted">Login to load recent analyses.</div>
+        </article>
+
+        <article class="panel">
+          <div class="row spread">
+            <h2>Generated Files</h2>
+            <div class="row">
+              <button id="download-all" type="button" class="btn-alt" disabled>Download JSON</button>
+              <button id="download-zip" type="button" disabled>Download ZIP</button>
+            </div>
+          </div>
+          <div id="files" class="files muted">Generate a pipeline to view files.</div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

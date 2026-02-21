@@ -2,9 +2,12 @@ const ui = {
   form: document.getElementById("analyze-form"),
   status: document.getElementById("status"),
   submit: document.getElementById("submit-btn"),
+  scan: document.getElementById("scan-btn"),
   profile: document.getElementById("profile"),
   recs: document.getElementById("recommendations"),
   files: document.getElementById("files"),
+  findings: document.getElementById("findings"),
+  scanSummary: document.getElementById("scan-summary"),
   downloadJson: document.getElementById("download-all"),
   downloadZip: document.getElementById("download-zip"),
   register: document.getElementById("register-btn"),
@@ -65,6 +68,13 @@ function currentPayload() {
   };
 }
 
+function currentScanPayload() {
+  return {
+    repo_url: document.getElementById("repo_url").value.trim(),
+    max_files: Number(document.getElementById("scan_max_files").value || 80),
+  };
+}
+
 function renderProfile(data) {
   const { profile, ci_provider } = data;
   ui.profile.innerHTML = `
@@ -115,8 +125,49 @@ function renderFiles(files) {
 function setLoggedInState(isLoggedIn, email = "") {
   ui.downloadJson.disabled = !isLoggedIn;
   ui.downloadZip.disabled = !isLoggedIn;
+  ui.scan.disabled = !isLoggedIn;
   ui.sessionBadge.textContent = isLoggedIn ? `Session: ${email || "active"}` : "No session";
   ui.sessionBadge.classList.toggle("muted", !isLoggedIn);
+}
+
+function severityClass(severity) {
+  if (severity === "critical") return "sev-critical";
+  if (severity === "high") return "sev-high";
+  if (severity === "medium") return "sev-medium";
+  return "sev-low";
+}
+
+function renderFindings(data) {
+  const counts = data.severity_counts || {};
+  ui.scanSummary.classList.remove("muted");
+  ui.scanSummary.textContent =
+    `Scanned ${data.scanned_files} files | Critical: ${counts.critical || 0} | High: ${counts.high || 0} | Medium: ${counts.medium || 0} | Low: ${counts.low || 0}`;
+
+  if (!data.findings || !data.findings.length) {
+    ui.findings.classList.add("muted");
+    ui.findings.textContent = "No issues detected by current rule set.";
+    return;
+  }
+  ui.findings.classList.remove("muted");
+  ui.findings.innerHTML = "";
+  data.findings.forEach((finding) => {
+    const item = document.createElement("article");
+    item.className = "finding-card";
+    item.innerHTML = `
+      <header class="finding-head">
+        <strong>${finding.title}</strong>
+        <span class="sev ${severityClass(finding.severity)}">${finding.severity}</span>
+      </header>
+      <div class="finding-body">
+        <div><strong>Rule:</strong> ${finding.rule_id}</div>
+        <div><strong>Category:</strong> ${finding.category}</div>
+        <div><strong>Location:</strong> <code>${finding.path}:${finding.line}</code></div>
+        <div><strong>Snippet:</strong> <code>${escapeHtml(finding.snippet)}</code></div>
+        <div><strong>Fix:</strong> ${finding.recommendation}</div>
+      </div>
+    `;
+    ui.findings.appendChild(item);
+  });
 }
 
 async function loadRecent() {
@@ -227,6 +278,10 @@ ui.logout.addEventListener("click", () => {
   ui.recent.textContent = "Login to load recent analyses.";
   ui.files.classList.add("muted");
   ui.files.textContent = "Generate a pipeline to view files.";
+  ui.findings.classList.add("muted");
+  ui.findings.textContent = "Run vulnerability scan to view findings.";
+  ui.scanSummary.classList.add("muted");
+  ui.scanSummary.textContent = "No scan yet.";
 });
 
 ui.form.addEventListener("submit", async (event) => {
@@ -255,6 +310,32 @@ ui.form.addEventListener("submit", async (event) => {
     setMessage(ui.status, err.message || "Generation failed.", "err");
   } finally {
     ui.submit.disabled = false;
+  }
+});
+
+ui.scan.addEventListener("click", async () => {
+  if (!token) {
+    setMessage(ui.status, "Please login first.", "err");
+    return;
+  }
+  ui.scan.disabled = true;
+  setMessage(ui.status, "Scanning repository for vulnerabilities...");
+  try {
+    const data = await api("/api/vuln-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(currentScanPayload()),
+    });
+    renderFindings(data);
+    setMessage(
+      ui.status,
+      `Scan complete for ${data.repository}. Found ${data.findings.length} issue(s).`,
+      "ok"
+    );
+  } catch (err) {
+    setMessage(ui.status, err.message || "Scan failed.", "err");
+  } finally {
+    ui.scan.disabled = false;
   }
 });
 

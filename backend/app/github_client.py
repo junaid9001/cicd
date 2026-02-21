@@ -21,6 +21,7 @@ class RepoData:
     repo: str
     default_branch: str
     tree_paths: List[str]
+    blob_paths: List[str]
     file_contents: Dict[str, str]
 
     @property
@@ -119,5 +120,88 @@ def fetch_repo_data(repo_url: str, branch: Optional[str]) -> RepoData:
         repo=repo,
         default_branch=selected_branch,
         tree_paths=paths,
+        blob_paths=blobs,
         file_contents=content_map,
     )
+
+
+def fetch_source_files(
+    repo_data: RepoData,
+    max_files: int = 80,
+    max_bytes: int = 120_000,
+) -> Dict[str, str]:
+    include_ext = {
+        ".py",
+        ".js",
+        ".ts",
+        ".tsx",
+        ".jsx",
+        ".java",
+        ".go",
+        ".rs",
+        ".rb",
+        ".php",
+        ".cs",
+        ".yml",
+        ".yaml",
+        ".env",
+        ".tf",
+        ".tfvars",
+        ".sh",
+        ".ps1",
+        ".sql",
+    }
+    include_names = {
+        "dockerfile",
+        "docker-compose.yml",
+        "package.json",
+        "requirements.txt",
+        "pyproject.toml",
+        "pipfile",
+        "pom.xml",
+        "build.gradle",
+        "build.gradle.kts",
+        "go.mod",
+        "cargo.toml",
+    }
+    skip_prefixes = (
+        ".git/",
+        "node_modules/",
+        "vendor/",
+        "dist/",
+        "build/",
+        "__pycache__/",
+    )
+
+    selected: List[str] = []
+    for path in repo_data.blob_paths:
+        lower = path.lower()
+        if lower.startswith(skip_prefixes):
+            continue
+        filename = lower.rsplit("/", 1)[-1]
+        if filename in include_names or any(lower.endswith(ext) for ext in include_ext):
+            selected.append(path)
+
+    # Prioritize root-level and limit fetch count.
+    selected = sorted(selected, key=lambda p: (p.count("/"), len(p)))[:max_files]
+
+    source_map: Dict[str, str] = dict(repo_data.file_contents)
+    for path in selected:
+        if path in source_map:
+            continue
+        raw_url = (
+            f"https://raw.githubusercontent.com/{repo_data.owner}/{repo_data.repo}/"
+            f"{repo_data.default_branch}/{path}"
+        )
+        resp = requests.get(raw_url, headers=_headers(), timeout=30)
+        if resp.status_code >= 400:
+            continue
+        # Skip likely binary content.
+        content_type = resp.headers.get("content-type", "")
+        if "application/octet-stream" in content_type:
+            continue
+        text = resp.text
+        if "\x00" in text:
+            continue
+        source_map[path] = text[:max_bytes]
+    return source_map

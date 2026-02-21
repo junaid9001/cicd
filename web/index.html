@@ -41,7 +41,7 @@
 
         <article class="panel">
           <h2>Generate</h2>
-          <p class="hint">Choose provider and generate complete pipeline files.</p>
+          <p class="hint">Generate pipelines or run a code vulnerability scan.</p>
           <form id="analyze-form" class="stack">
             <label for="repo_url">GitHub Repository URL</label>
             <input id="repo_url" name="repo_url" type="url" placeholder="https://github.com/owner/repo" required />
@@ -64,7 +64,13 @@
               </label>
             </div>
 
-            <button id="submit-btn" type="submit">Generate CI/CD</button>
+            <label for="scan_max_files">Scan Max Files</label>
+            <input id="scan_max_files" type="number" min="10" max="300" value="80" />
+
+            <div class="row">
+              <button id="submit-btn" type="submit">Generate CI/CD</button>
+              <button id="scan-btn" type="button" class="btn-alt">Scan Vulnerabilities</button>
+            </div>
           </form>
           <p id="status" class="msg"></p>
         </article>
@@ -89,6 +95,9 @@
             </div>
           </div>
           <div id="files" class="files muted">Generate a pipeline to view files.</div>
+          <h3 class="scan-title">Vulnerability Findings</h3>
+          <div id="scan-summary" class="mono muted">No scan yet.</div>
+          <div id="findings" class="files muted">Run vulnerability scan to view findings.</div>
         </article>
       </section>
     </main>

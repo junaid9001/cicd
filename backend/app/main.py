@@ -22,7 +22,8 @@ from .db import (
     save_analysis,
     update_subscription_by_customer,
 )
-from .github_client import GitHubError, fetch_repo_data
+from .github_client import GitHubError, fetch_repo_data, fetch_source_files
+from .scanner import scan_repository
 from .schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -32,6 +33,8 @@ from .schemas import (
     MeResponse,
     RegisterRequest,
     StripeWebhookResponse,
+    VulnScanRequest,
+    VulnScanResponse,
 )
 
 
@@ -129,6 +132,19 @@ def analyze_zip(payload: AnalyzeRequest, user: Dict[str, object] = Depends(get_c
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{repo_name}-{result.ci_provider}-cicd.zip"'},
     )
+
+
+@app.post("/api/vuln-scan", response_model=VulnScanResponse)
+def vuln_scan(payload: VulnScanRequest, user: Dict[str, object] = Depends(get_current_user)) -> VulnScanResponse:
+    try:
+        repo_data = fetch_repo_data(str(payload.repo_url), payload.branch)
+        source_files = fetch_source_files(repo_data, max_files=payload.max_files)
+        result = scan_repository(repository=repo_data.slug, branch=repo_data.default_branch, files=source_files)
+    except GitHubError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Scan failed: {exc}") from exc
+    return result
 
 
 @app.post("/api/auth/register", response_model=AuthResponse)

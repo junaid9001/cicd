@@ -74,5 +74,30 @@ class StripeWebhookResponse(BaseModel):
     event_type: str
 
 
+class VulnScanRequest(BaseModel):
+    repo_url: HttpUrl
+    branch: Optional[str] = None
+    max_files: int = Field(default=80, ge=10, le=300)
+
+
+class VulnFinding(BaseModel):
+    rule_id: str
+    severity: Literal["critical", "high", "medium", "low"]
+    category: str
+    title: str
+    path: str
+    line: int
+    snippet: str
+    recommendation: str
+
+
+class VulnScanResponse(BaseModel):
+    repository: str
+    branch: str
+    scanned_files: int
+    severity_counts: Dict[str, int]
+    findings: List[VulnFinding]
+
+
 class ErrorResponse(BaseModel):
     detail: str = Field(..., description="Human-friendly error message")

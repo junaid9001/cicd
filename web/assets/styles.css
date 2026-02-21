@@ -262,6 +262,60 @@ button:disabled {
   overflow: hidden;
 }
 
+.finding-card {
+  border: 1px solid #d6d9e6;
+  border-radius: 12px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.finding-head {
+  padding: 9px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  background: #f4f6fb;
+}
+
+.sev {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.sev-critical {
+  background: #fde8e8;
+  color: #991b1b;
+}
+
+.sev-high {
+  background: #fff0e0;
+  color: #9a3412;
+}
+
+.sev-medium {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.sev-low {
+  background: #e8f9ee;
+  color: #166534;
+}
+
+.finding-body {
+  padding: 10px;
+  font-size: 0.86rem;
+}
+
+.scan-title {
+  margin-top: 16px;
+}
+
 .file-head {
   background: #eff8f3;
   padding: 10px;

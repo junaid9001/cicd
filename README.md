@@ -20,6 +20,7 @@ Repo2CI is a SaaS-style app that accepts a GitHub repository URL, detects stack/
 - ZIP download with real target file paths
 - JWT auth (signup/login) and tenant-scoped data
 - Billing-ready foundation with Stripe webhook ingestion
+- Non-AI vulnerability scanning (rule-based static checks)
 
 ## Project Structure
 
@@ -77,6 +78,7 @@ uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
 - `GET /api/auth/me`
 - `POST /api/analyze` (auth required)
 - `POST /api/analyze/zip` (auth required)
+- `POST /api/vuln-scan` (auth required)
 - `GET /api/analyses?limit=10` (auth required)
 - `GET /api/billing/subscription` (auth required)
 - `POST /api/billing/link-customer?customer_id=cus_xxx` (auth required)
@@ -97,3 +99,4 @@ Example request:
 
 - Generated workflows are strong defaults, but deployment steps are intentionally a placeholder because cloud targets vary.
 - Private repos need a valid `GITHUB_TOKEN` with appropriate access.
+- Vulnerability scan is deterministic and rule-based (no AI), so treat it as a fast first-pass and combine with dedicated SAST/DAST tools.
